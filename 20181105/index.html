@@ -97,10 +97,10 @@ by [@melo15](https://twitter.com/melo15) - VEGA corporation
   <img src="./img/profile.png" width="150" height="150" alt="大津直樹">  
 </div>
 
-### 大津 直樹(おおつ なおき)  [@melo15](https://twitter.com/melo15)  
+### 大津 直樹 Naoki Otsu  [@melo15](https://twitter.com/melo15)  
 - 福岡(4年) → 東京(3年) → 福岡(1年)  
 - 主にJavaScript, HTML, CSS
-- ベガ社は、2018年2月にJoin  
+- ベガ社は、2018年2月にJoin🎉  
 - Laig(ライグ)のフロントエンド担当してます  
 </tk-slide>
 
@@ -147,8 +147,9 @@ by [@melo15](https://twitter.com/melo15) - VEGA corporation
 
 
 <tk-slide layout="code" h-left type="text/x-markdown">
-## Laigのパフォーマンス改善で主にやったこと
+## アジェンダ
 
+Laigのパフォーマンス改善で主にやったこと
 - AWS関連
 - リクエスト数の削減
 - バンドルサイズ圧縮
@@ -165,15 +166,22 @@ by [@melo15](https://twitter.com/melo15) - VEGA corporation
 
 
 <tk-slide layout="title" h-left type="text/x-markdown">
-# 画像のリサイズとWebP
+# 画像のリサイズ
   
 - [CloudFront & Lambda@Edge](https://aws.amazon.com/jp/blogs/news/resizing-images-with-amazon-cloudfront-lambdaedge-aws-cdn-blog/) で画像をリサイズ  
 - `<img src="./sample.png?d=960x360">` のような指定をすると
 AWS側でリサイズした画像を生成して配信してくれる  
 - S3に置いているのは大きい元画像1つだけ
-- リサイズした画像を別で準備する必要がない
-- 設定で[WebP変換](https://techlife.cookpad.com/entry/2018-05-25-lambda-edge)が可能  
-→ Chrome/AndroidブラウザにはWebP、その他のブラウザはjpg, png, gifで提供
+- リサイズした画像を別で準備する必要がない👍
+</tk-slide>
+
+
+<tk-slide layout="title" h-left type="text/x-markdown">
+# WebP配信
+
+- WebPはGoogleが開発した、トラフィック量軽減を目的とした静止画フォーマット → 軽量
+- [CloudFront & Lambda@Edge](https://aws.amazon.com/jp/blogs/news/resizing-images-with-amazon-cloudfront-lambdaedge-aws-cdn-blog/)は、設定で[WebP変換](https://techlife.cookpad.com/entry/2018-05-25-lambda-edge)が可能  
+→ Chrome/AndroidブラウザにはWebP、その他のブラウザはjpg, png, gifで提供している
 </tk-slide>
 
 
@@ -198,9 +206,9 @@ AWS側でリサイズした画像を生成して配信してくれる
 # [vue-intersect](https://github.com/heavyy/vue-intersect)の遅延ロード  
 
 - [Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) を使ったVueコンポーネント
-- 画面内に表示された画像だけにリクエストが走るようになる  
+- 画面内に表示された画像だけリクエストが走るようになる  
 - TOPページのFirst Viewのみ取得するようにして、画像リクエスト数を29 → 13に減少
-- IE11, Safari, iOS Safari, Android Browser4系以下は対応してないので、[polyfill](https://www.npmjs.com/package/intersection-observer)を読ませてあげる
+- IE11, Safari, iOS Safari, Android Browser4系以下は対応してないので、[polyfill](https://www.npmjs.com/package/intersection-observer)を読ませる必要がある
 </tk-slide>
 
 
@@ -214,12 +222,35 @@ AWS側でリサイズした画像を生成して配信してくれる
 <tk-slide layout="title" h-left type="text/x-markdown">
 # バンドルサイズ圧縮
 
-- 元は1つだったPCとSPのリポジトリを別リポジトリに分割
-- CommonsChunkPluginを使用して塊を分ける  
-- `const Magazines = () => import(/* webpackChunkName: "magazines" */ '@/views/Magazines'`
-- [webpack-bundle-analizer](https://github.com/webpack-contrib/webpack-bundle-analyzer)で依存関係、バンドルサイズの測定
+- 元々1つだったPC/SPのリポジトリを分割運用へ → 容量削減
+- [コンポーネントの遅延ローディング](https://router.vuejs.org/ja/guide/advanced/lazy-loading.html)を導入
+→ 頻繁に訪れないページのコンポーネントは初期ロードから除外
 </tk-slide>
 
+
+
+<tk-slide layout="code" h-left invert type="text/x-markdown">
+遅延ローディングの設定方法
+```js
+// よく訪れるページのコンポーネント
+import Home from '@/views/Home'; 
+
+// あまり訪れないページのコンポーネント
+const Help = () => import('@/views/Help');
+
+// 上記のように分けてからnew Routerする
+new Router({...});
+```
+※[syntax-dynamic-import](https://router.vuejs.org/ja/guide/advanced/lazy-loading.html)プラグインが必要
+</tk-slide>
+
+
+
+<tk-slide layout="bullets" h-left type="text/x-markdown">
+- [webpack-bundle-analizer](https://github.com/webpack-contrib/webpack-bundle-analyzer)を使うと、JSの依存関係、バンドルサイズの測定が出来て良い💮
+
+<img src="./img/bundle.png" style="margin: 0;" alt="bundle">  
+</tk-slide>
 
 
 <tk-slide layout="title" invert type="text/x-markdown">
@@ -227,12 +258,11 @@ AWS側でリサイズした画像を生成して配信してくれる
 </tk-slide>
 
 
-
 <tk-slide layout="title" h-left type="text/x-markdown">
 # キャッシュ対策
 
 - ServiceWorker(PWA)による[ファイルの事前キャッシュ](https://developers.google.com/web/ilt/pwa/caching-files-with-service-worker)を導入
-- Laigは[Vue CLI](https://cli.vuejs.org/)を使っていたので、vue.config.jsの`pwa`を設定
+- Laigは[Vue CLI](https://cli.vuejs.org/)を使っていたのでvue.config.jsの`'pwa'`を設定
 - 内部では、Googleの[Workbox](https://developers.google.com/web/tools/workbox/guides/get-started)が使われていて、js, css, 画像を事前にキャッシュ → 2度目のアクセス時の改善へ
 - [apollo-cache-persist](https://github.com/apollographql/apollo-cache-persist)(GraphQL)の導入 → localStorageにデータをcacheして初期表示を早くしてくれる
 <!-- - [Apollo clientのcache](https://www.apollographql.com/docs/react/advanced/caching.html)を使う -->
@@ -263,9 +293,9 @@ AWS側でリサイズした画像を生成して配信してくれる
 <tk-slide layout="title" h-left invert type="text/x-markdown">
 # まとめ
 
-- AWS系の改善は、全ページに影響があるので強力
-- [Vue CLI](https://cli.vuejs.org/)のレールに乗ったおかげで、ServiceWorkerの導入も比較的簡単に
-- Vue.js系の外部コンポーネントも充実しているので、色々とtry & errorしていくとよさそう
+- AWS系での改善は、全ページに影響があって強力
+- [Vue CLI](https://cli.vuejs.org/)のレールに乗ってServiceWorker導入も比較的簡単に
+- Vue.js系のパフォーマンス改善のコンポーネントも充実しているので、色々とtry & errorするとよさそう
 </tk-slide>
 
 
