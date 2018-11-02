@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>新サービスLaigで使ったVue.jsのパフォーマンス術</title>
+    <link rel="stylesheet" href="./dist/talkie.css">
+    <link rel="stylesheet" href="./dist/talkie.theme-default.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css">
+    <meta property="og:url" content="https://vega-otsu.github.io/tl/20181105/">
+    <meta property="og:site_name" content="新サービスLaigで使ったVue.jsのパフォーマンス術">
+    <meta property="og:author" content="melo15">
+    <meta name="twitter:url" content="https://vega-otsu.github.io/tl/20181105/">
+    <meta name="twitter:site" content="@melo15">
+    <meta property="og:image" content="https://vega-otsu.github.io/tl/20181105/img/og.jpg">
+    <meta name="twitter:image" content="https://vega-otsu.github.io/tl/20181105/img/og.jpg">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="新サービスLaigで使ったVue.jsのパフォーマンス術">
+    <meta property="og:description" content="VEGA Tech Meetup #3(2018年11月5日)での発表資料">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="新サービスLaigで使ったVue.jsのパフォーマンス術">
+    <meta name="twitter:description" content="VEGA Tech Meetup #3(2018年11月5日)での発表資料">
+    <meta name="description" content="VEGA Tech Meetup #3(2018年11月5日)での発表資料">
+    <style>
+        /* base overriding */
+    [layout] {
+      font-family: "NotoSansCJKjp-Regular","Open Sans","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;
+    }
+    [layout] h1, [layout] h2, [layout] h3, [layout] h4, [layout] h5, [layout] h6 {
+      font-weight: bold;
+      font-family: "NotoSansCJKjp-Regular","Open Sans","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;
+    }
+    [layout] h1 {
+        font-size: 4em;
+    }
+    [layout] h2 {
+        font-size: 4em;
+    }
+    [layout] h3 {
+        margin-bottom: 0;
+        font-size: 2em;
+    }
+    
+    [layout] ul {
+      list-style-type: disc;
+    }
+
+    [layout] li {
+      margin-left: 24px;
+    }
+
+    [layout] iframe {
+      margin: 0;
+    }
+
+    [layout="title"] code {
+      border: none;
+    }
+
+    /* layout=profile */
+    [layout=profile] > *:nth-child(1) {
+      flex: 1 !important;
+      text-align: center;
+    }
+    [layout=profile] > *:nth-child(1) strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 2em;
+    }
+    [layout=profile] > *:nth-child(2) {
+      flex: 2.5 !important;
+    }
+    [layout=profile] > *:nth-child(2) .hljs {
+      font-size: 1em;
+      font-family: Consolas, Monaco,'Andale Mono',monospace;
+    }
+    
+    </style>
+</head>
+
+<body>
+
+
+<tk-slide layout="title" h-left invert type="text/x-markdown">
+# 新サービスLaigで使った<br>Vue.jsのパフォーマンス術
+
+[VEGA Tech Meetup #3](https://vega-tech.connpass.com/event/104581/)<br>
+by [@melo15](https://twitter.com/melo15) - VEGA corporation
+</tk-slide>
+
+
+
+<tk-slide layout="title" h-left type="text/x-markdown">
+## 軽い自己紹介
+
+<div>
+  <img src="./img/profile.png" width="150" height="150" alt="大津直樹">  
+</div>
+
+### 大津 直樹(おおつ なおき)  [@melo15](https://twitter.com/melo15)  
+- 福岡(4年) → 東京(3年) → 福岡(1年)  
+- 主にJavaScript, HTML, CSS
+- ベガ社は、2018年2月にJoin  
+- Laig(ライグ)のフロントエンド担当してます  
+</tk-slide>
+
+
+
+
+<tk-slide layout="bullets" type="text/x-markdown">
+
+<img src="./img/laig.svg" width="300" height="300" style="margin-top: 0;" alt="laig">  
+
+### [https://laig.jp](https://laig.jp)  
+- 色んなショップの家具や雑貨が1箇所で見れるECメディア  
+- オンライン(Laig)とオフライン(実店舗)を行き来して、より良いユーザー体験を実現する目的
+- 2018年10月に正式オープン🍻  
+</tk-slide>
+
+
+
+<tk-slide layout="profile" horizontal invert type="text/x-markdown">
+<div>
+  <img src="./img/laig_white.png" width="200" height="150" alt="laig"><br>  
+  <strong>Laigの技術</strong>
+</div>
+
+```json
+{
+  "フロントエンド": {
+    "フレームワーク": "Vue.js, Vuex",
+    "ライブラリ": "Apollo GraphQL",
+    "テストツール": "Jest"
+  },
+  "サーバーサイド": "Rails, GraphQL",
+  "iOS": "Swift",
+  "Android": "Kotlin",
+  "インフラ": "AWS(EC2, S3, ...etc)",
+  "モニタリング": "Sentry, Datadog",
+  "環境構築": "Docker",
+  "CI": "Travis CI"
+}
+```
+</tk-slide>
+
+
+
+
+<tk-slide layout="code" h-left type="text/x-markdown">
+## Laigのパフォーマンス改善で主にやったこと
+
+- AWS関連
+- リクエスト数の削減
+- バンドルサイズ圧縮
+- キャッシュ対策
+- UX
+</tk-slide>
+
+
+
+
+<tk-slide layout="title" invert type="text/x-markdown">
+## AWS関連
+</tk-slide>
+
+
+<tk-slide layout="title" h-left type="text/x-markdown">
+# 画像のリサイズとWebP
+  
+- [CloudFront & Lambda@Edge](https://aws.amazon.com/jp/blogs/news/resizing-images-with-amazon-cloudfront-lambdaedge-aws-cdn-blog/) で画像をリサイズ  
+- `<img src="./sample.png?d=960x360">` のような指定をすると
+AWS側でリサイズした画像を生成して配信してくれる  
+- S3に置いているのは大きい元画像1つだけ
+- リサイズした画像を別で準備する必要がない
+- 設定で[WebP変換](https://techlife.cookpad.com/entry/2018-05-25-lambda-edge)が可能  
+→ Chrome/AndroidブラウザにはWebP、その他のブラウザはjpg, png, gifで提供
+</tk-slide>
+
+
+
+<tk-slide layout="title" h-left type="text/x-markdown">
+## 静的ファイルの圧縮配信
+
+- JS,CSS,画像の静的ファイルは、基本的にS3へ  
+- S3のファイルを、CloudFront経由でgzip配信  
+- gzipによってオリジナルの[4分の1以下のサイズ](https://docs.aws.amazon.com/ja_jp/AmazonCloudFront/latest/DeveloperGuide/ServingCompressedFiles.html)になることも
+- Laigでは、app.jsのサイズが2.6MB → 354KBに減少
+</tk-slide>
+
+
+
+<tk-slide layout="title" invert type="text/x-markdown">
+## リクエスト数の削減
+</tk-slide>
+
+
+<tk-slide layout="title" h-left type="text/x-markdown">
+# [vue-intersect](https://github.com/heavyy/vue-intersect)の遅延ロード  
+
+- [Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) を使ったVueコンポーネント
+- 画面内に表示された画像だけにリクエストが走るようになる  
+- TOPページのFirst Viewのみ取得するようにして、画像リクエスト数を29 → 13に減少
+- IE11, Safari, iOS Safari, Android Browser4系以下は対応してないので、[polyfill](https://www.npmjs.com/package/intersection-observer)を読ませてあげる
+</tk-slide>
+
+
+
+<tk-slide layout="title" invert type="text/x-markdown">
+## バンドルサイズ圧縮
+</tk-slide>
+
+
+
+<tk-slide layout="title" h-left type="text/x-markdown">
+# バンドルサイズ圧縮
+
+- 元は1つだったPCとSPのリポジトリを別リポジトリに分割
+- CommonsChunkPluginを使用して塊を分ける  
+- `const Magazines = () => import(/* webpackChunkName: "magazines" */ '@/views/Magazines'`
+- [webpack-bundle-analizer](https://github.com/webpack-contrib/webpack-bundle-analyzer)で依存関係、バンドルサイズの測定
+</tk-slide>
+
+
+
+<tk-slide layout="title" invert type="text/x-markdown">
+## キャッシュ対策
+</tk-slide>
+
+
+
+<tk-slide layout="title" h-left type="text/x-markdown">
+# キャッシュ対策
+
+- ServiceWorker(PWA)による[ファイルの事前キャッシュ](https://developers.google.com/web/ilt/pwa/caching-files-with-service-worker)を導入
+- Laigは[Vue CLI](https://cli.vuejs.org/)を使っていたので、vue.config.jsの`pwa`を設定
+- 内部では、Googleの[Workbox](https://developers.google.com/web/tools/workbox/guides/get-started)が使われていて、js, css, 画像を事前にキャッシュ → 2度目のアクセス時の改善へ
+- [apollo-cache-persist](https://github.com/apollographql/apollo-cache-persist)(GraphQL)の導入 → localStorageにデータをcacheして初期表示を早くしてくれる
+<!-- - [Apollo clientのcache](https://www.apollographql.com/docs/react/advanced/caching.html)を使う -->
+</tk-slide>
+
+
+
+<tk-slide layout="title" invert type="text/x-markdown">
+## UX
+</tk-slide>
+
+
+
+
+<tk-slide layout="title" h-left type="text/x-markdown">
+# UX
+
+<iframe height='265' scrolling='no' title='QJLprR' src='//codepen.io/melo15/embed/QJLprR/?height=265&theme-id=0&default-tab=css,result' frameborder='no' allowtransparency='true' allowfullscreen='true' style='width: 100%;'>See the Pen <a href='https://codepen.io/melo15/pen/QJLprR/'>QJLprR</a> by NaokiOtsu (<a href='https://codepen.io/melo15'>@melo15</a>) on <a href='https://codepen.io'>CodePen</a>.
+</iframe>
+
+- Skeleton Screenを主要ページに追加
+- コンテンツ読み込み完了までは、うっすらグレイのアニメーションを表示 → 真っ白の時間を少なく
+- Skeleton Screen用コンポーネントを作って使い回した
+</tk-slide>
+
+
+
+<tk-slide layout="title" h-left invert type="text/x-markdown">
+# まとめ
+
+- AWS系の改善は、全ページに影響があるので強力
+- [Vue CLI](https://cli.vuejs.org/)のレールに乗ったおかげで、ServiceWorkerの導入も比較的簡単に
+- Vue.js系の外部コンポーネントも充実しているので、色々とtry & errorしていくとよさそう
+</tk-slide>
+
+
+
+<tk-slide layout="title" invert type="text/x-markdown">
+# ご静聴<br>ありがとうございました
+
+</tk-slide>
+
+
+
+<tk-pager></tk-pager>
+<tk-progress></tk-progress>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="./dist/webcomponents-loader.js"></script>
+<script src="./dist/talkie.js"></script>
+<script>
+    window.addEventListener('WebComponentsReady', function (e) {
+        document.body.className += ' webcomponents-ready';
+        talkie.run({ wide: false, horizontal: false });
+    });
+</script>
+</body>
+
+</html>
