@@ -212,6 +212,39 @@ AWS側でリサイズした画像を生成して配信してくれる
 </tk-slide>
 
 
+<tk-slide layout="code" h-left invert type="text/x-markdown">
+### vue-intersect
+
+HTML側
+```html
+<template>
+  <intersect @enter="msg = 'Intersected'" @leave="msg = 'Not intersected'">
+    <div>{{ msg }}</div>
+  </intersect>
+</template>
+```
+</tk-slide>
+
+
+<tk-slide layout="code" h-left invert type="text/x-markdown">
+### vue-intersect
+
+JS側
+```html
+<script>
+import Intersect from 'vue-intersect'
+
+export default {
+  components: { Intersect },
+  data () {
+    return {
+      msg: 'I will change'
+    }
+  }
+}
+</script> 
+```
+</tk-slide>
 
 <tk-slide layout="title" invert type="text/x-markdown">
 ## バンドルサイズ圧縮
