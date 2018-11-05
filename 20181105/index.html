@@ -98,8 +98,7 @@ by [@melo15](https://twitter.com/melo15) - VEGA corporation
 </div>
 
 ### 大津 直樹 Naoki Otsu  [@melo15](https://twitter.com/melo15)  
-- 福岡(4年) → 東京(3年) → 福岡(1年)  
-- 主にJavaScript, HTML, CSS
+- これまで主にフロントエンド(JavaScript, HTML, CSS)
 - ベガ社は、2018年2月にJoin🎉  
 - Laig(ライグ)のフロントエンド担当してます  
 </tk-slide>
@@ -172,6 +171,7 @@ Laigのパフォーマンス改善で主にやったこと
 - `<img src="./sample.png?d=960x360">` のような指定をすると
 AWS側でリサイズした画像を生成して配信してくれる  
 - S3に置いているのは大きい元画像1つだけ
+- その画面に適した縦横サイズ、容量で提供できる
 - リサイズした画像を別で準備する必要がない👍
 </tk-slide>
 
@@ -181,7 +181,8 @@ AWS側でリサイズした画像を生成して配信してくれる
 
 - WebPはGoogleが開発した、トラフィック量軽減を目的とした静止画フォーマット → 軽量
 - [CloudFront & Lambda@Edge](https://aws.amazon.com/jp/blogs/news/resizing-images-with-amazon-cloudfront-lambdaedge-aws-cdn-blog/)は、設定で[WebP変換](https://techlife.cookpad.com/entry/2018-05-25-lambda-edge)が可能  
-→ Chrome/AndroidブラウザにはWebP、その他のブラウザはjpg, png, gifで提供している
+→ Chrome/AndroidブラウザにはWebP、その他のブラウザはjpg, png, gifで提供
+- 例) あるメイン画像 550KB → 200KBに削減
 </tk-slide>
 
 
@@ -192,7 +193,6 @@ AWS側でリサイズした画像を生成して配信してくれる
 - JS,CSS,画像の静的ファイルは、基本的にS3へ  
 - S3のファイルを、CloudFront経由でgzip配信  
 - gzipによってオリジナルの[4分の1以下のサイズ](https://docs.aws.amazon.com/ja_jp/AmazonCloudFront/latest/DeveloperGuide/ServingCompressedFiles.html)になることも
-- Laigでは、app.jsのサイズが2.6MB → 354KBに減少
 </tk-slide>
 
 
@@ -230,7 +230,7 @@ AWS側でリサイズした画像を生成して配信してくれる
 
 
 <tk-slide layout="code" h-left invert type="text/x-markdown">
-遅延ローディングの設定方法
+コンポーネント遅延ローディングの実装方法
 ```js
 // よく訪れるページのコンポーネント
 import Home from '@/views/Home'; 
@@ -241,7 +241,6 @@ const Help = () => import('@/views/Help');
 // 上記のように分けてからnew Routerする
 new Router({...});
 ```
-※[syntax-dynamic-import](https://router.vuejs.org/ja/guide/advanced/lazy-loading.html)プラグインが必要
 </tk-slide>
 
 
@@ -295,7 +294,7 @@ new Router({...});
 
 - AWS系での改善は、全ページに影響があって強力
 - [Vue CLI](https://cli.vuejs.org/)のレールに乗ってServiceWorker導入も比較的簡単に
-- Vue.js系のパフォーマンス改善のコンポーネントも充実しているので、色々とtry & errorするとよさそう
+- Vue.jsはパフォーマンス改善系の外部コンポーネントもあったりするので、機能だけじゃなくパフォーマンスにも目を向けると良さそう
 </tk-slide>
 
 
